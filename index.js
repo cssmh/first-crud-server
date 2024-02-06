@@ -47,7 +47,40 @@ async function run() {
     });
     // send user to database end
 
-    app.delete("/users/:id", async(req, res) => {
+    // update user info
+    // first get that user for client
+    app.get("/update/:id", async (req, res) => {
+      const getThatUser = req.params.id;
+      const query = { _id: new ObjectId(getThatUser) };
+      const result = await allUserCollection.findOne(query);
+      res.send(result);
+    });
+
+    // get updated info from client to server, time to database
+    app.put("/update/:id", async (req, res) => {
+      const getIdFromClient = req.params.id;
+      const updatedUserInfo = req.body;
+      console.log(updatedUserInfo, getIdFromClient);
+      // time to send updated info to database
+      const filter = { _id: new ObjectId(getIdFromClient) };
+      const options = { upsert: true };
+      const updateUser = {
+        $set: {
+          name: updatedUserInfo.name,
+          email: updatedUserInfo.email,
+        },
+      };
+      const result = await allUserCollection.updateOne(
+        filter,
+        updateUser,
+        options
+      );
+      res.send(result);
+      // send updated info to database end
+    });
+    // update user info end
+
+    app.delete("/users/:id", async (req, res) => {
       const getIdFromClient = req.params.id;
       console.log("please delete", getIdFromClient);
       const query = { _id: new ObjectId(getIdFromClient) };
