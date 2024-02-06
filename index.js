@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
-require('dotenv').config()
+require("dotenv").config();
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -18,7 +18,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -26,23 +26,40 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const database = client.db("usersDB");
-    const allUserCollection = database.collection("users");
+    // main mongo database collection files names
+    const allUserCollection = client.db("usersDB").collection("users");
+    // main mongo database collection files names end
 
-    app.post("/users", async(req, res) => {
-      const gotUser = req.body
-      // console.log("new got user", gotUser);
+    // get all users from database
+    app.get("/users", async (req, res) => {
+      const cursor = allUserCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    // get all users from database end
+
+    // send user to database
+    app.post("/users", async (req, res) => {
+      const gotUser = req.body;
+      console.log("new got user", gotUser);
       const result = await allUserCollection.insertOne(gotUser);
-      res.send(result)
-    })
+      res.send(result);
+    });
+    // send user to database end
 
-
-
-
+    app.delete("/users/:id", async(req, res) => {
+      const getIdFromClient = req.params.id;
+      console.log("please delete", getIdFromClient);
+      const query = { _id: new ObjectId(getIdFromClient) };
+      const result = await allUserCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -52,7 +69,7 @@ run().catch(console.dir);
 // mongo code end
 
 app.get("/", (req, res) => {
-  res.send("CRUD running here host");
+  res.send("CRUD RUNNING IN LOCAL 5000");
 });
 
 app.listen(port, () => {
